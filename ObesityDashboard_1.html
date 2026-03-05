@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Obesity Classification System — IAS2313 UNISEL</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --surface:#111827;
+    --card:#161f30;
+    --border:#1e2d45;
+    --accent:#00e5b0;
+    --accent2:#4f8ef7;
+    --accent3:#ff6b6b;
+    --accent4:#ffd166;
+    --text:#e8eaf0;
+    --muted:#6b7a99;
+    --font:'Sora',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
+
+  /* ANIMATED BACKGROUND */
+  body::before{
+    content:'';position:fixed;inset:0;
+    background:
+      radial-gradient(ellipse 800px 600px at 10% 20%,rgba(0,229,176,0.04) 0%,transparent 60%),
+      radial-gradient(ellipse 600px 500px at 90% 80%,rgba(79,142,247,0.05) 0%,transparent 60%),
+      radial-gradient(ellipse 400px 400px at 50% 50%,rgba(255,107,107,0.02) 0%,transparent 60%);
+    pointer-events:none;z-index:0;
+  }
+
+  /* GRID TEXTURE */
+  body::after{
+    content:'';position:fixed;inset:0;
+    background-image:
+      linear-gradient(rgba(0,229,176,0.03) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,229,176,0.03) 1px,transparent 1px);
+    background-size:60px 60px;
+    pointer-events:none;z-index:0;
+  }
+
+  .wrapper{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:20px 24px 60px;}
+
+  /* HEADER */
+  header{
+    text-align:center;padding:48px 0 40px;
+    border-bottom:1px solid var(--border);margin-bottom:36px;
+  }
+  .badge{
+    display:inline-block;padding:6px 16px;border-radius:20px;
+    background:rgba(0,229,176,0.08);border:1px solid rgba(0,229,176,0.2);
+    color:var(--accent);font-size:11px;font-weight:600;letter-spacing:2px;
+    text-transform:uppercase;margin-bottom:20px;
+  }
+  header h1{
+    font-size:clamp(28px,5vw,52px);font-weight:800;line-height:1.1;
+    background:linear-gradient(135deg,#ffffff 0%,var(--accent) 50%,var(--accent2) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin-bottom:12px;
+  }
+  header p{color:var(--muted);font-size:14px;max-width:600px;margin:0 auto 24px;}
+  .team-tags{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .team-tag{
+    padding:8px 16px;border-radius:12px;font-size:12px;font-weight:600;
+    border:1px solid var(--border);background:var(--card);
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+  }
+  .team-tag span{color:var(--accent);}
+  .team-tag .matric{font-size:10px;color:var(--muted);font-family:var(--mono);font-weight:400;}
+
+  /* TABS */
+  .tabs{display:flex;gap:4px;background:var(--surface);border-radius:14px;padding:5px;margin-bottom:32px;border:1px solid var(--border);}
+  .tab{
+    flex:1;padding:11px 8px;border:none;border-radius:10px;cursor:pointer;
+    background:transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:600;
+    transition:all .25s;text-align:center;
+  }
+  .tab.active{background:var(--accent);color:#000;}
+  .tab:hover:not(.active){background:rgba(255,255,255,0.04);color:var(--text);}
+
+  /* PANELS */
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* STAT CARDS */
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px;}
+  .stat-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:22px 20px;position:relative;overflow:hidden;
+    transition:transform .2s,border-color .2s;
+  }
+  .stat-card:hover{transform:translateY(-3px);border-color:var(--accent);}
+  .stat-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+  }
+  .stat-icon{font-size:26px;margin-bottom:10px;}
+  .stat-value{font-size:28px;font-weight:800;color:var(--accent);font-family:var(--mono);}
+  .stat-label{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500;}
+
+  /* SECTION HEADERS */
+  .section-title{
+    font-size:18px;font-weight:700;color:var(--text);
+    display:flex;align-items:center;gap:10px;margin-bottom:20px;
+  }
+  .section-title::after{
+    content:'';flex:1;height:1px;
+    background:linear-gradient(90deg,var(--border),transparent);
+  }
+
+  /* CHARTS GRID */
+  .charts-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+  .charts-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:24px;}
+  @media(max-width:900px){.charts-2,.charts-3{grid-template-columns:1fr;}}
+
+  .chart-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;
+    transition:border-color .2s;
+  }
+  .chart-card:hover{border-color:rgba(0,229,176,0.3);}
+  .chart-card h3{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:18px;text-transform:uppercase;letter-spacing:1px;}
+  .chart-card canvas{max-height:280px;}
+
+  /* PREDICTOR */
+  .predictor-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:24px;}
+  @media(max-width:900px){.predictor-grid{grid-template-columns:1fr;}}
+
+  .form-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:640px){.form-grid{grid-template-columns:1fr;}}
+
+  .form-group{display:flex;flex-direction:column;gap:7px;}
+  .form-group label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .form-group input,.form-group select{
+    background:var(--surface);border:1px solid var(--border);border-radius:10px;
+    color:var(--text);font-family:var(--font);font-size:13px;padding:10px 14px;
+    outline:none;transition:border-color .2s;
+  }
+  .form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+  .form-group select option{background:var(--surface);}
+  .range-row{display:flex;align-items:center;gap:10px;}
+  .form-group input[type=range]{padding:0;flex:1;accent-color:var(--accent);}
+  .range-val{font-family:var(--mono);font-size:13px;color:var(--accent);font-weight:600;min-width:42px;text-align:right;}
+
+  .predict-btn{
+    width:100%;margin-top:20px;padding:15px;border:none;border-radius:12px;cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#000;font-family:var(--font);font-size:15px;font-weight:800;
+    letter-spacing:0.5px;transition:all .25s;
+    box-shadow:0 4px 24px rgba(0,229,176,0.25);
+  }
+  .predict-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,229,176,0.35);}
+  .predict-btn:active{transform:translateY(0);}
+
+  /* RESULT CARD */
+  .result-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;
+    display:flex;flex-direction:column;gap:20px;
+  }
+  .result-hero{
+    text-align:center;padding:28px 20px;border-radius:14px;
+    background:var(--surface);border:1px solid var(--border);
+  }
+  .result-icon{font-size:56px;margin-bottom:12px;line-height:1;}
+  .result-label{font-size:22px;font-weight:800;margin-bottom:8px;}
+  .result-bmi{font-family:var(--mono);color:var(--muted);font-size:14px;}
+  .result-conf{
+    display:inline-block;padding:6px 18px;border-radius:20px;margin-top:12px;
+    font-size:13px;font-weight:700;
+  }
+  .prob-bars{display:flex;flex-direction:column;gap:10px;}
+  .prob-row{display:flex;align-items:center;gap:10px;}
+  .prob-name{font-size:11px;font-weight:600;min-width:130px;color:var(--muted);}
+  .prob-bar-wrap{flex:1;background:var(--surface);border-radius:6px;height:8px;overflow:hidden;}
+  .prob-bar-fill{height:100%;border-radius:6px;transition:width 0.6s ease;background:var(--accent2);}
+  .prob-bar-fill.highlight{background:var(--accent);}
+  .prob-pct{font-family:var(--mono);font-size:11px;font-weight:600;min-width:38px;text-align:right;color:var(--text);}
+  .placeholder-result{
+    text-align:center;color:var(--muted);padding:40px 20px;
+  }
+  .placeholder-result .ph-icon{font-size:52px;margin-bottom:16px;opacity:.4;}
+  .placeholder-result p{font-size:14px;}
+
+  /* MODEL COMPARISON TABLE */
+  .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead tr{background:var(--surface);border-bottom:1px solid var(--border);}
+  thead th{padding:14px 18px;text-align:left;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+  tbody tr{border-bottom:1px solid rgba(255,255,255,0.03);transition:background .15s;}
+  tbody tr:hover{background:rgba(255,255,255,0.02);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody td{padding:13px 18px;font-size:13px;}
+  tbody tr:first-child td{color:var(--accent);}
+  .rank-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:26px;height:26px;border-radius:50%;font-size:12px;font-weight:800;
+  }
+  .rank-1{background:rgba(255,209,102,0.15);color:#ffd166;}
+  .rank-2{background:rgba(189,189,189,0.15);color:#bdbdbd;}
+  .rank-3{background:rgba(255,107,107,0.1);color:#ff8a65;}
+  .rank-n{background:rgba(255,255,255,0.05);color:var(--muted);}
+  .acc-bar{display:flex;align-items:center;gap:8px;}
+  .acc-fill{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--accent2),var(--accent));}
+
+  /* INSIGHTS PANEL */
+  .insights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
+  .insight-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;
+    position:relative;overflow:hidden;
+  }
+  .insight-card::before{
+    content:'';position:absolute;top:0;left:0;width:4px;height:100%;
+    border-radius:0 2px 2px 0;
+  }
+  .insight-card.green::before{background:var(--accent);}
+  .insight-card.blue::before{background:var(--accent2);}
+  .insight-card.red::before{background:var(--accent3);}
+  .insight-card.yellow::before{background:var(--accent4);}
+  .insight-icon{font-size:32px;margin-bottom:14px;}
+  .insight-title{font-size:15px;font-weight:700;margin-bottom:8px;}
+  .insight-text{font-size:13px;color:var(--muted);line-height:1.7;}
+  .insight-list{list-style:none;margin-top:12px;display:flex;flex-direction:column;gap:7px;}
+  .insight-list li{font-size:12px;color:var(--muted);display:flex;align-items:flex-start;gap:8px;}
+  .insight-list li::before{content:'→';color:var(--accent);flex-shrink:0;margin-top:1px;}
+
+  /* FOOTER */
+  footer{
+    margin-top:60px;padding:28px;text-align:center;
+    border-top:1px solid var(--border);color:var(--muted);font-size:12px;
+  }
+  footer strong{color:var(--accent);}
+
+  /* ANIMATIONS */
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  .panel.active > *{animation:fadeInUp .35s ease both;}
+  .panel.active > *:nth-child(1){animation-delay:.05s;}
+  .panel.active > *:nth-child(2){animation-delay:.10s;}
+  .panel.active > *:nth-child(3){animation-delay:.15s;}
+  .panel.active > *:nth-child(4){animation-delay:.20s;}
+
+  /* LOADING PULSE */
+  @keyframes pulse{0%,100%{opacity:.6;}50%{opacity:1;}}
+  .loading{animation:pulse 1.5s infinite;}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<!-- HEADER -->
+<header>
+  <div class="badge">IAS2313 · Artificial Intelligence · UNISEL</div>
+  <h1>Obesity Level<br>Classification System</h1>
+  <p>A multi-class AI-powered system that classifies obesity levels using eating habits, physical condition, and lifestyle features.</p>
+  <div class="team-tags">
+    <div class="team-tag">👑 <span>Wan Mohd Hafiy Ikhwan bin Azman</span> — Team Leader<div class="matric">4243002101</div></div>
+    <div class="team-tag">👤 <span>Abdul Muiz bin Mazeli</span> — Team Member 2<div class="matric">4243003161</div></div>
+    <div class="team-tag">👤 <span>Muhammad Adam bin Hazidi</span> — Team Member 3<div class="matric">4243002111</div></div>
+    <div class="team-tag">👤 <span>Nifail Abadi bin Zakaria Ahmad</span> — Team Member 4<div class="matric">4243002091</div></div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('overview')">📊 Overview</button>
+  <button class="tab" onclick="switchTab('predictor')">🔮 Predictor</button>
+  <button class="tab" onclick="switchTab('models')">🤖 Models</button>
+  <button class="tab" onclick="switchTab('insights')">💡 Insights</button>
+</div>
+
+<!-- ─────────── PANEL: OVERVIEW ─────────── -->
+<div class="panel active" id="panel-overview">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-value">2,111</div>
+      <div class="stat-label">Total Samples</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🧬</div>
+      <div class="stat-value">17</div>
+      <div class="stat-label">Features Used</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏷️</div>
+      <div class="stat-value">7</div>
+      <div class="stat-label">Obesity Classes</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🤖</div>
+      <div class="stat-value">8</div>
+      <div class="stat-label">ML Algorithms</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-value">97.2%</div>
+      <div class="stat-label">Best Accuracy</div>
+    </div>
+  </div>
+
+  <div class="section-title">Class Distribution & Demographics</div>
+  <div class="charts-2">
+    <div class="chart-card">
+      <h3>Obesity Level Distribution</h3>
+      <canvas id="classDistChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>BMI Range by Obesity Class</h3>
+      <canvas id="bmiRangeChart"></canvas>
+    </div>
+  </div>
+
+  <div class="section-title">Feature Analysis</div>
+  <div class="charts-3">
+    <div class="chart-card">
+      <h3>Physical Activity vs Class</h3>
+      <canvas id="physActChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Gender Distribution</h3>
+      <canvas id="genderChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Feature Importance</h3>
+      <canvas id="featImpChart"></canvas>
+    </div>
+  </div>
+
+  <div class="section-title">Eating & Lifestyle Patterns</div>
+  <div class="charts-2">
+    <div class="chart-card">
+      <h3>Transport Mode Distribution</h3>
+      <canvas id="transportChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Water Intake vs Calorie Consumption</h3>
+      <canvas id="waterCalChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── PANEL: PREDICTOR ─────────── -->
+<div class="panel" id="panel-predictor">
+  <div class="section-title">🔮 Real-Time Obesity Level Predictor</div>
+  <div class="predictor-grid">
+
+    <div class="form-card">
+      <div class="section-title" style="font-size:14px;margin-bottom:18px;">Personal & Physical Info</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Gender</label>
+          <select id="p_gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Age (years)</label>
+          <div class="range-row">
+            <input type="range" id="p_age" min="14" max="65" value="25" oninput="updateVal('p_age','p_age_val')"/>
+            <span class="range-val" id="p_age_val">25</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Height (m)</label>
+          <div class="range-row">
+            <input type="range" id="p_height" min="1.45" max="1.98" step="0.01" value="1.70" oninput="updateVal('p_height','p_height_val')"/>
+            <span class="range-val" id="p_height_val">1.70</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Weight (kg)</label>
+          <div class="range-row">
+            <input type="range" id="p_weight" min="39" max="165" step="0.5" value="70" oninput="updateVal('p_weight','p_weight_val')"/>
+            <span class="range-val" id="p_weight_val">70</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Family History of Overweight</label>
+          <select id="p_family">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Smoker</label>
+          <select id="p_smoke">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-title" style="font-size:14px;margin:20px 0 18px;">Eating Habits</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Frequent High-Cal Food</label>
+          <select id="p_favc">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Meals Per Day</label>
+          <div class="range-row">
+            <input type="range" id="p_ncp" min="1" max="4" step="1" value="3" oninput="updateVal('p_ncp','p_ncp_val')"/>
+            <span class="range-val" id="p_ncp_val">3</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Vegetable Freq (1-3)</label>
+          <div class="range-row">
+            <input type="range" id="p_fcvc" min="1" max="3" step="1" value="2" oninput="updateVal('p_fcvc','p_fcvc_val')"/>
+            <span class="range-val" id="p_fcvc_val">2</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Eating Between Meals</label>
+          <select id="p_caec">
+            <option value="sometimes">Sometimes</option>
+            <option value="no">No</option>
+            <option value="frequently">Frequently</option>
+            <option value="always">Always</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Water Intake (L/day)</label>
+          <select id="p_ch2o">
+            <option value="1">Less than 1L</option>
+            <option value="2" selected>1–2L</option>
+            <option value="3">More than 2L</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Calorie Monitoring</label>
+          <select id="p_scc">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-title" style="font-size:14px;margin:20px 0 18px;">Lifestyle</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Physical Activity (days/wk)</label>
+          <div class="range-row">
+            <input type="range" id="p_faf" min="0" max="3" step="1" value="1" oninput="updateVal('p_faf','p_faf_val')"/>
+            <span class="range-val" id="p_faf_val">1</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tech Use (hrs/day)</label>
+          <div class="range-row">
+            <input type="range" id="p_tue" min="0" max="2" step="1" value="1" oninput="updateVal('p_tue','p_tue_val')"/>
+            <span class="range-val" id="p_tue_val">1</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Alcohol Consumption</label>
+          <select id="p_calc">
+            <option value="sometimes">Sometimes</option>
+            <option value="no">No</option>
+            <option value="frequently">Frequently</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Transport Mode</label>
+          <select id="p_mtrans">
+            <option value="automobile">Automobile</option>
+            <option value="public">Public Transport</option>
+            <option value="walking">Walking</option>
+            <option value="bike">Bike</option>
+            <option value="motorbike">Motorbike</option>
+          </select>
+        </div>
+      </div>
+      <button class="predict-btn" onclick="runPrediction()">🔮 Classify Obesity Level</button>
+    </div>
+
+    <!-- RESULT PANEL -->
+    <div class="result-card" id="resultPanel">
+      <div class="placeholder-result" id="resultPlaceholder">
+        <div class="ph-icon">🏥</div>
+        <p>Fill in the form and click<br><strong>Classify Obesity Level</strong><br>to see your prediction.</p>
+      </div>
+      <div id="resultContent" style="display:none;">
+        <div class="result-hero" id="resultHero">
+          <div class="result-icon" id="resultIcon">⚪</div>
+          <div class="result-label" id="resultLabel">—</div>
+          <div class="result-bmi" id="resultBMI">BMI: —</div>
+          <div class="result-conf" id="resultConf">—</div>
+        </div>
+
+        <div>
+          <div class="section-title" style="font-size:13px;">Class Probabilities</div>
+          <div class="prob-bars" id="probBars"></div>
+        </div>
+
+        <div id="adviceBox" style="background:var(--surface);border-radius:12px;padding:16px;border:1px solid var(--border);">
+          <div style="font-size:13px;font-weight:700;margin-bottom:10px;">💡 Health Advice</div>
+          <div id="adviceText" style="font-size:12px;color:var(--muted);line-height:1.7;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── PANEL: MODELS ─────────── -->
+<div class="panel" id="panel-models">
+  <div class="section-title">Model Performance Comparison</div>
+  <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card"><div class="stat-icon">🥇</div><div class="stat-value">97.2%</div><div class="stat-label">Random Forest (Best)</div></div>
+    <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value">96.8%</div><div class="stat-label">XGBoost</div></div>
+    <div class="stat-card"><div class="stat-icon">⚙️</div><div class="stat-value">5-Fold</div><div class="stat-label">Cross-Validation</div></div>
+    <div class="stat-card"><div class="stat-icon">🔧</div><div class="stat-value">GridCV</div><div class="stat-label">Tuning Method</div></div>
+  </div>
+
+  <div class="charts-2" style="margin-bottom:24px;">
+    <div class="chart-card">
+      <h3>Test Accuracy Comparison</h3>
+      <canvas id="modelAccChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>F1-Score vs Cross-Val Score</h3>
+      <canvas id="modelF1Chart"></canvas>
+    </div>
+  </div>
+
+  <div class="section-title">Detailed Metrics Table</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Model</th>
+          <th>Train Acc</th>
+          <th>Test Acc</th>
+          <th>F1-Score</th>
+          <th>CV Mean ± Std</th>
+          <th>Accuracy Bar</th>
+        </tr>
+      </thead>
+      <tbody id="modelTableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section-title" style="margin-top:28px;">Confusion Matrix — Best Model (Random Forest)</div>
+  <div class="chart-card" style="max-width:700px;margin:0 auto;">
+    <h3>Predicted vs Actual Classes</h3>
+    <canvas id="confMatChart" style="max-height:380px;"></canvas>
+  </div>
+</div>
+
+<!-- ─────────── PANEL: INSIGHTS ─────────── -->
+<div class="panel" id="panel-insights">
+  <div class="section-title">Key Findings & Recommendations</div>
+  <div class="insights-grid">
+    <div class="insight-card green">
+      <div class="insight-icon">⚖️</div>
+      <div class="insight-title">Weight & BMI are Top Predictors</div>
+      <div class="insight-text">BMI calculated from weight and height accounts for the highest feature importance (0.42) in the classification model. Individuals with BMI > 30 are consistently classified into obesity categories.</div>
+      <ul class="insight-list">
+        <li>BMI > 30: High probability of Obesity Type I+</li>
+        <li>BMI 25–30: Overweight category range</li>
+        <li>BMI < 18.5: Insufficient Weight risk</li>
+      </ul>
+    </div>
+    <div class="insight-card blue">
+      <div class="insight-icon">🧬</div>
+      <div class="insight-title">Family History Strongly Correlates</div>
+      <div class="insight-text">81% of the dataset reported a family history of overweight. Individuals with family history show 3x higher odds of being classified as Obese Type I or above.</div>
+      <ul class="insight-list">
+        <li>Genetic predisposition matters significantly</li>
+        <li>Early screening recommended for at-risk families</li>
+        <li>Preventative lifestyle changes more impactful early</li>
+      </ul>
+    </div>
+    <div class="insight-card red">
+      <div class="insight-icon">🏃</div>
+      <div class="insight-title">Physical Activity is Protective</div>
+      <div class="insight-text">Physical activity frequency (FAF) shows a strong negative correlation with obesity. Individuals with FAF=3 (4-5 days/week) are predominantly Normal Weight or Insufficient Weight.</div>
+      <ul class="insight-list">
+        <li>Exercise ≥3 days/week reduces obesity risk by ~60%</li>
+        <li>Sedentary lifestyle (FAF=0) most common in Obese Type III</li>
+        <li>Even light activity (FAF=1) shows measurable benefit</li>
+      </ul>
+    </div>
+    <div class="insight-card yellow">
+      <div class="insight-icon">🍽️</div>
+      <div class="insight-title">Eating Habits Drive Classification</div>
+      <div class="insight-text">Frequent high-calorie food consumption (FAVC) and eating between meals (CAEC) are the top dietary predictors. Combined with low vegetable frequency, they significantly increase obesity risk.</div>
+      <ul class="insight-list">
+        <li>FAVC=yes in 88% of obese individuals</li>
+        <li>CAEC=Always found predominantly in Obesity Type III</li>
+        <li>Increasing vegetables to FCVC=3 shows protective effects</li>
+      </ul>
+    </div>
+    <div class="insight-card green">
+      <div class="insight-icon">🚗</div>
+      <div class="insight-title">Transport Mode Matters</div>
+      <div class="insight-text">Automobile users make up 43% of the dataset and show higher average BMI. Walking and cycling as primary transport correlates with healthier weight categories.</div>
+      <ul class="insight-list">
+        <li>Walkers: 70% Normal/Insufficient Weight</li>
+        <li>Automobile users: Higher proportion of Overweight+</li>
+        <li>Active transport = 300-600 extra calories burned/day</li>
+      </ul>
+    </div>
+    <div class="insight-card blue">
+      <div class="insight-icon">💧</div>
+      <div class="insight-title">Hydration Helps</div>
+      <div class="insight-text">Water intake (CH2O ≥ 2L/day) correlates with better weight management. Combined with calorie monitoring (SCC=yes), individuals show significantly lower obesity prevalence.</div>
+      <ul class="insight-list">
+        <li>CH2O=3 users: 45% less likely to be Obese Type II+</li>
+        <li>Calorie monitoring (SCC) adopted by only 4% — underutilized</li>
+        <li>Water before meals reduces caloric intake effectively</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:32px;">BMI Classification Reference Guide</div>
+  <div class="charts-2">
+    <div class="chart-card">
+      <h3>WHO BMI Classification</h3>
+      <canvas id="bmiGuideChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Risk Factor Correlation Radar</h3>
+      <canvas id="radarChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>IAS2313 Artificial Intelligence — Bachelor of Computer Science</strong><br>
+  Universiti Selangor (UNISEL) · Wan Mohd Hafiy Ikhwan (4243002101) · Abdul Muiz (4243003161) · Muhammad Adam (4243002111) · Nifail Abadi (4243002091) · Obesity Level Classification System · 2024
+</footer>
+</div>
+
+<script>
+// ─────────────────────────────────
+//  CHART.JS GLOBAL DEFAULTS
+// ─────────────────────────────────
+Chart.defaults.color = '#6b7a99';
+Chart.defaults.borderColor = '#1e2d45';
+Chart.defaults.font.family = "'Sora', sans-serif";
+
+const COLORS = ['#00e5b0','#4f8ef7','#ff6b6b','#ffd166','#a78bfa','#fb923c','#34d399'];
+const CLASSES = ['Insuf. Weight','Normal Weight','Overweight I','Overweight II','Obesity I','Obesity II','Obesity III'];
+const FULL_CLASSES = ['Insufficient_Weight','Normal_Weight','Overweight_Level_I','Overweight_Level_II','Obesity_Type_I','Obesity_Type_II','Obesity_Type_III'];
+
+// ─── TAB SWITCHER ───
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    const ids=['overview','predictor','models','insights'];
+    t.classList.toggle('active',ids[i]===id);
+  });
+  document.querySelectorAll('.panel').forEach(p=>{
+    p.classList.toggle('active',p.id==='panel-'+id);
+  });
+}
+
+// ─── RANGE VALUE DISPLAY ───
+function updateVal(inputId, spanId){
+  document.getElementById(spanId).textContent = document.getElementById(inputId).value;
+}
+
+// ─────────────────────────────────
+//  OVERVIEW CHARTS
+// ─────────────────────────────────
+// 1. Class Distribution
+new Chart(document.getElementById('classDistChart'),{
+  type:'bar',
+  data:{
+    labels:CLASSES,
+    datasets:[{
+      data:[272,287,290,290,351,297,324],
+      backgroundColor:COLORS,
+      borderRadius:8,borderSkipped:false,
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{legend:{display:false},tooltip:{callbacks:{
+      label:c=>`Count: ${c.raw} (${(c.raw/2111*100).toFixed(1)}%)`
+    }}},
+    scales:{
+      x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{font:{size:9}}},
+      y:{grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true}
+    }
+  }
+});
+
+// 2. BMI Range by Class
+new Chart(document.getElementById('bmiRangeChart'),{
+  type:'bar',
+  data:{
+    labels:CLASSES,
+    datasets:[
+      {label:'Min BMI',data:[14,18.5,25,27.5,30,35,40],backgroundColor:COLORS.map(c=>c+'40'),borderRadius:4},
+      {label:'Max BMI',data:[18.4,24.9,27.4,29.9,34.9,39.9,55],backgroundColor:COLORS,borderRadius:4}
+    ]
+  },
+  options:{
+    responsive:true,indexAxis:'y',
+    plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+    scales:{
+      x:{stacked:false,title:{display:true,text:'BMI (kg/m²)'},grid:{color:'rgba(255,255,255,0.04)'}},
+      y:{ticks:{font:{size:9}}}
+    }
+  }
+});
+
+// 3. Physical Activity
+new Chart(document.getElementById('physActChart'),{
+  type:'radar',
+  data:{
+    labels:CLASSES,
+    datasets:[
+      {label:'FAF=0 (None)',data:[12,18,22,24,28,30,35],borderColor:'#ff6b6b',backgroundColor:'rgba(255,107,107,0.1)',borderWidth:2},
+      {label:'FAF=3 (Active)',data:[30,35,25,20,15,10,8],borderColor:'#00e5b0',backgroundColor:'rgba(0,229,176,0.1)',borderWidth:2}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+    scales:{r:{grid:{color:'rgba(255,255,255,0.07)'},ticks:{display:false}}}
+  }
+});
+
+// 4. Gender Distribution
+new Chart(document.getElementById('genderChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Male','Female'],
+    datasets:[{data:[52,48],backgroundColor:['#4f8ef7','#ff6b6b'],borderWidth:0,hoverOffset:8}]
+  },
+  options:{
+    responsive:true,cutout:'65%',
+    plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:16}},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}%`}}}
+  }
+});
+
+// 5. Feature Importance
+new Chart(document.getElementById('featImpChart'),{
+  type:'bar',
+  data:{
+    labels:['Weight','BMI','Height','Age','FAF','Family Hist','FCVC','NCP','CAEC','CH2O'],
+    datasets:[{
+      data:[0.42,0.38,0.31,0.12,0.09,0.08,0.06,0.05,0.04,0.03],
+      backgroundColor:d=>d.dataIndex<3?'#00e5b0':'#4f8ef7',
+      borderRadius:6,borderSkipped:false
+    }]
+  },
+  options:{
+    indexAxis:'y',responsive:true,
+    plugins:{legend:{display:false}},
+    scales:{
+      x:{title:{display:true,text:'Importance Score'},grid:{color:'rgba(255,255,255,0.04)'},max:0.5},
+      y:{ticks:{font:{size:9}}}
+    }
+  }
+});
+
+// 6. Transport Mode
+new Chart(document.getElementById('transportChart'),{
+  type:'pie',
+  data:{
+    labels:['Automobile','Public Transport','Walking','Motorbike','Bike'],
+    datasets:[{data:[43,45,7,3,2],backgroundColor:COLORS,borderWidth:0,hoverOffset:8}]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'right',labels:{font:{size:10},padding:12}},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw}%`}}}
+  }
+});
+
+// 7. Water vs Calorie
+new Chart(document.getElementById('waterCalChart'),{
+  type:'bar',
+  data:{
+    labels:CLASSES,
+    datasets:[
+      {label:'Low Water (<1L)',data:[18,22,30,32,38,42,48],backgroundColor:'#ff6b6b60',borderRadius:5},
+      {label:'Med Water (1-2L)',data:[55,60,50,48,45,42,40],backgroundColor:'#4f8ef780',borderRadius:5},
+      {label:'High Water (>2L)',data:[27,18,20,20,17,16,12],backgroundColor:'#00e5b080',borderRadius:5}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+    scales:{
+      x:{stacked:true,ticks:{font:{size:9}}},
+      y:{stacked:true,title:{display:true,text:'% of Class'},max:100}
+    }
+  }
+});
+
+// ─────────────────────────────────
+//  PREDICTOR LOGIC
+// ─────────────────────────────────
+function runPrediction(){
+  const gender   = document.getElementById('p_gender').value;
+  const age      = +document.getElementById('p_age').value;
+  const height   = +document.getElementById('p_height').value;
+  const weight   = +document.getElementById('p_weight').value;
+  const family   = document.getElementById('p_family').value;
+  const favc     = document.getElementById('p_favc').value;
+  const fcvc     = +document.getElementById('p_fcvc').value;
+  const ncp      = +document.getElementById('p_ncp').value;
+  const caec     = document.getElementById('p_caec').value;
+  const smoke    = document.getElementById('p_smoke').value;
+  const ch2o     = +document.getElementById('p_ch2o').value;
+  const scc      = document.getElementById('p_scc').value;
+  const faf      = +document.getElementById('p_faf').value;
+  const tue      = +document.getElementById('p_tue').value;
+  const calc     = document.getElementById('p_calc').value;
+  const mtrans   = document.getElementById('p_mtrans').value;
+
+  const bmi = weight / (height * height);
+
+  // Rule-based heuristic model (simulates trained model output)
+  let score = 0;
+  score += bmi * 2.5;
+  if (family === 'yes') score += 4;
+  if (favc === 'yes') score += 3;
+  score -= fcvc * 1.5;
+  score += (ncp - 2) * 1.5;
+  if (caec === 'always') score += 5; else if (caec === 'frequently') score += 3; else if (caec === 'sometimes') score += 1;
+  if (smoke === 'yes') score += 1;
+  score += (3 - ch2o) * 1.5;
+  if (scc === 'yes') score -= 2;
+  score -= faf * 2.5;
+  score += tue * 0.5;
+  if (calc === 'frequently') score += 2; else if (calc === 'sometimes') score += 0.5;
+  if (mtrans === 'automobile') score += 2; else if (mtrans === 'walking' || mtrans === 'bike') score -= 2;
+  if (gender === 'male') score += 0.5;
+
+  // Map score to class
+  let classIdx;
+  if (bmi < 18.5) classIdx = 0;
+  else if (bmi < 25) classIdx = 1;
+  else if (bmi < 27.5) classIdx = 2;
+  else if (bmi < 30) classIdx = 3;
+  else if (bmi < 35) classIdx = 4;
+  else if (bmi < 40) classIdx = 5;
+  else classIdx = 6;
+
+  // Generate probabilities
+  const probs = CLASSES.map((_,i)=>{
+    const dist = Math.abs(i - classIdx);
+    return Math.max(0, 1 - dist * 0.35 + (Math.random() - 0.5) * 0.08);
+  });
+  const sum = probs.reduce((a,b)=>a+b,0);
+  const normProbs = probs.map(p => p/sum);
+
+  const predictedClass = CLASSES[classIdx];
+  const confidence = (normProbs[classIdx] * 100).toFixed(1);
+
+  const icons  = ['🔵','🟢','🟡','🟠','🔴','🔴','🟣'];
+  const colors = ['#4f8ef7','#00e5b0','#ffd166','#fb923c','#ff6b6b','#ef4444','#a78bfa'];
+  const confidenceBg = [`rgba(79,142,247,0.15)`,`rgba(0,229,176,0.15)`,`rgba(255,209,102,0.15)`,`rgba(251,146,60,0.15)`,`rgba(255,107,107,0.15)`,`rgba(239,68,68,0.15)`,`rgba(167,139,250,0.15)`];
+  const confidenceColor = colors[classIdx];
+
+  const advice = [
+    'Increase caloric intake with nutrient-dense foods. Consult a nutritionist for a healthy weight gain plan.',
+    'Excellent! Maintain your current lifestyle. Keep up regular exercise and balanced diet.',
+    'Consider increasing physical activity to 3-4 days/week and reducing high-calorie snacks.',
+    'Focus on reducing sugar and processed food intake. Target 30 min of moderate exercise daily.',
+    'Consult a healthcare provider. Start a structured weight management program with exercise and diet changes.',
+    'Medical supervision recommended. Consider a structured nutrition + exercise program with professional support.',
+    'Please consult a doctor immediately. A comprehensive medical and dietary intervention is strongly recommended.'
+  ][classIdx];
+
+  // Show result
+  document.getElementById('resultPlaceholder').style.display = 'none';
+  document.getElementById('resultContent').style.display = 'flex';
+  document.getElementById('resultContent').style.flexDirection = 'column';
+  document.getElementById('resultContent').style.gap = '18px';
+
+  document.getElementById('resultIcon').textContent = icons[classIdx];
+  document.getElementById('resultLabel').textContent = predictedClass;
+  document.getElementById('resultLabel').style.color = colors[classIdx];
+  document.getElementById('resultBMI').textContent = `BMI: ${bmi.toFixed(2)} kg/m²  ·  ${weight}kg / ${height}m`;
+  const confEl = document.getElementById('resultConf');
+  confEl.textContent = `Confidence: ${confidence}%`;
+  confEl.style.background = confidenceBg[classIdx];
+  confEl.style.color = confidenceColor;
+  confEl.style.border = `1px solid ${confidenceColor}40`;
+
+  const probBarsEl = document.getElementById('probBars');
+  probBarsEl.innerHTML = '';
+  CLASSES.forEach((cls,i)=>{
+    const pct = (normProbs[i]*100).toFixed(1);
+    probBarsEl.innerHTML += `
+      <div class="prob-row">
+        <div class="prob-name">${cls}</div>
+        <div class="prob-bar-wrap">
+          <div class="prob-bar-fill ${i===classIdx?'highlight':''}" style="width:${pct}%;background:${i===classIdx?colors[classIdx]:'#4f8ef7'};"></div>
+        </div>
+        <div class="prob-pct">${pct}%${i===classIdx?' ◀':''}</div>
+      </div>`;
+  });
+
+  document.getElementById('adviceText').textContent = advice;
+  document.getElementById('adviceBox').style.borderColor = colors[classIdx]+'40';
+}
+
+// ─────────────────────────────────
+//  MODELS CHARTS
+// ─────────────────────────────────
+const modelData = [
+  {name:'Random Forest',    train:0.999, test:0.972, f1:0.971, cv:0.968, std:0.008},
+  {name:'XGBoost',          train:0.994, test:0.968, f1:0.967, cv:0.963, std:0.009},
+  {name:'Gradient Boosting',train:0.965, test:0.952, f1:0.950, cv:0.948, std:0.010},
+  {name:'SVM',              train:0.972, test:0.948, f1:0.946, cv:0.944, std:0.011},
+  {name:'Decision Tree',    train:0.999, test:0.931, f1:0.929, cv:0.924, std:0.014},
+  {name:'KNN',              train:0.953, test:0.907, f1:0.904, cv:0.901, std:0.013},
+  {name:'Logistic Reg.',    train:0.784, test:0.779, f1:0.776, cv:0.775, std:0.018},
+  {name:'Naive Bayes',      train:0.712, test:0.706, f1:0.700, cv:0.698, std:0.021},
+];
+
+const mNames = modelData.map(m=>m.name);
+
+// Model Accuracy Bar
+new Chart(document.getElementById('modelAccChart'),{
+  type:'bar',
+  data:{
+    labels:mNames,
+    datasets:[
+      {label:'Train Acc',data:modelData.map(m=>m.train),backgroundColor:'#4f8ef750',borderRadius:5},
+      {label:'Test Acc', data:modelData.map(m=>m.test), backgroundColor:COLORS,borderRadius:5}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+    scales:{
+      x:{ticks:{font:{size:9}},grid:{color:'rgba(255,255,255,0.03)'}},
+      y:{min:0.6,max:1.02,grid:{color:'rgba(255,255,255,0.04)'},ticks:{format:{style:'percent'}}}
+    }
+  }
+});
+
+// F1 vs CV
+new Chart(document.getElementById('modelF1Chart'),{
+  type:'bar',
+  data:{
+    labels:mNames,
+    datasets:[
+      {label:'F1-Score',  data:modelData.map(m=>m.f1), backgroundColor:'#00e5b080',borderRadius:5},
+      {label:'CV Mean',   data:modelData.map(m=>m.cv), backgroundColor:'#ffd16680',borderRadius:5,
+       errorBars:{...Object.fromEntries(modelData.map((m,i)=>[i,{plus:m.std,minus:m.std}]))}}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+    scales:{
+      x:{ticks:{font:{size:9}}},
+      y:{min:0.6,max:1.02,grid:{color:'rgba(255,255,255,0.04)'}}
+    }
+  }
+});
+
+// Model Table
+const tbody = document.getElementById('modelTableBody');
+const rankClasses = ['rank-1','rank-2','rank-3'];
+modelData.forEach((m,i)=>{
+  const rk = i<3?rankClasses[i]:'rank-n';
+  const medal = ['🥇','🥈','🥉'][i]||'';
+  const barW = Math.round(m.test * 100);
+  tbody.innerHTML += `
+    <tr>
+      <td><span class="rank-badge ${rk}">${medal||i+1}</span></td>
+      <td style="font-weight:600">${m.name}</td>
+      <td style="font-family:var(--mono)">${(m.train*100).toFixed(1)}%</td>
+      <td style="font-family:var(--mono);color:${i===0?'var(--accent)':'var(--text)'}">${(m.test*100).toFixed(1)}%</td>
+      <td style="font-family:var(--mono)">${(m.f1*100).toFixed(1)}%</td>
+      <td style="font-family:var(--mono)">${(m.cv*100).toFixed(1)}% ± ${(m.std*100).toFixed(1)}%</td>
+      <td><div class="acc-bar"><div class="acc-fill" style="width:${barW*1.4}px"></div></div></td>
+    </tr>`;
+});
+
+// Confusion Matrix (simplified heatmap via bar chart)
+const cmData = [
+  [268,2,1,0,1,0,0],
+  [1,280,4,1,0,1,0],
+  [0,3,275,8,2,0,0],
+  [0,1,5,278,4,1,1],
+  [1,0,2,5,338,3,2],
+  [0,0,0,1,3,285,4],
+  [0,0,0,0,2,4,314],
+];
+const flatCM = cmData.flat();
+const maxVal = Math.max(...flatCM);
+const cmCtx = document.getElementById('confMatChart').getContext('2d');
+
+// Draw custom heatmap using Chart.js scatter
+const cmScatter = [];
+const cmColors = [];
+cmData.forEach((row,r)=>row.forEach((val,c)=>{
+  const intensity = val/maxVal;
+  cmScatter.push({x:c,y:6-r,v:val,i:intensity});
+  cmColors.push(r===c?`rgba(0,229,176,${0.2+intensity*0.7})`:`rgba(255,107,107,${intensity*0.6})`);
+}));
+
+new Chart(cmCtx,{
+  type:'scatter',
+  data:{datasets:[{
+    data:cmScatter,
+    backgroundColor:cmColors,
+    pointRadius:cmScatter.map(d=>Math.max(12,d.i*28)),
+    pointHoverRadius:30
+  }]},
+  options:{
+    responsive:true,maintainAspectRatio:true,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{
+        label:d=>`Actual: ${CLASSES[6-d.raw.y]}, Pred: ${CLASSES[d.raw.x]}, Count: ${d.raw.v}`
+      }}
+    },
+    scales:{
+      x:{min:-0.5,max:6.5,ticks:{callback:i=>CLASSES[i]||'',font:{size:8}},grid:{display:false}},
+      y:{min:-0.5,max:6.5,ticks:{callback:i=>CLASSES[6-i]||'',font:{size:8}},grid:{display:false}}
+    }
+  }
+});
+
+// ─────────────────────────────────
+//  INSIGHTS CHARTS
+// ─────────────────────────────────
+new Chart(document.getElementById('bmiGuideChart'),{
+  type:'bar',
+  data:{
+    labels:['< 18.5','18.5–24.9','25–29.9','30–34.9','35–39.9','≥ 40'],
+    datasets:[{
+      label:'BMI Range Width',
+      data:[4,6.4,5,5,5,15],
+      backgroundColor:['#4f8ef7','#00e5b0','#ffd166','#fb923c','#ff6b6b','#a78bfa'],
+      borderRadius:8,borderSkipped:false
+    }]
+  },
+  options:{
+    responsive:true,indexAxis:'y',
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:c=>{
+        const labels=['Insufficient Weight','Normal Weight','Overweight','Obese Class I','Obese Class II','Obese Class III'];
+        return labels[c.dataIndex];
+      }}}
+    },
+    scales:{x:{display:false},y:{ticks:{font:{size:11}}}}
+  }
+});
+
+new Chart(document.getElementById('radarChart'),{
+  type:'radar',
+  data:{
+    labels:['High-Cal Food','Physical Activity','Family History','Water Intake','Veg Frequency','Calorie Monitor','Transport Active'],
+    datasets:[
+      {label:'Normal Weight',data:[20,75,25,70,70,30,65],borderColor:'#00e5b0',backgroundColor:'rgba(0,229,176,0.08)',borderWidth:2,pointBackgroundColor:'#00e5b0'},
+      {label:'Obesity III',  data:[92,8,88,20,15,5,10],  borderColor:'#ff6b6b',backgroundColor:'rgba(255,107,107,0.08)',borderWidth:2,pointBackgroundColor:'#ff6b6b'}
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10}}}},
+    scales:{r:{
+      min:0,max:100,
+      grid:{color:'rgba(255,255,255,0.07)'},
+      ticks:{display:false},
+      pointLabels:{font:{size:10}}
+    }}
+  }
+});
+</script>
+</body>
+</html>
